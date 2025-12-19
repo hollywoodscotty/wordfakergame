@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Word Faker Game</title>
+  <title>Secret Word Game</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -61,6 +62,11 @@
       margin-left: auto;
       margin-right: auto;
     }
+    .skip-btn {
+      background: #777;
+      color: #000;
+      margin-top: 2vh;
+    }
     .countdown {
       font-size: clamp(5rem, 10vw, 10rem);
       margin-top: 2vh;
@@ -78,25 +84,13 @@
   <script>
     const WORD_BANK = [
       "APPLE", "HOUSE", "RIVER", "PLANE", "STONE",
-      "CHAIR", "CLOCK", "BREAD", "LIGHT", "PHONE",
-      "TABLE", "WINDOW", "DOOR", "BOOK", "PENCIL",
-      "FLOWER", "CAR", "TRAIN", "BOAT", "MOUNTAIN",
-      "TREE", "CAT", "DOG", "BOTTLE", "CUP",
-      "FISH", "BRIDGE", "KEY", "BAG", "SHOE",
-      "BALL", "BREAD", "WATCH", "COIN", "MAP",
-      "BED", "SOFA", "LAMP", "ROAD", "STAR",
-      "MOON", "SUN", "CLOUD", "RAIN", "SNOW",
-      "FIRE", "WATER", "ICE", "SAND", "ROCK",
-      "BRUSH", "PAINT", "NOTE", "LETTER", "STAMP",
-      "FLAG", "CANDLE", "CLOCK", "DOCTOR", "NURSE",
-      "TEACHER", "STUDENT", "GUITAR", "PIANO", "DRUM",
-      "BICYCLE", "SKATE", "BOARD", "TRAINER", "HAT",
-      "JACKET", "GLASS", "PLATE", "SPOON", "FORK",
-      "KNIFE", "KEYBOARD", "MOUSE", "SCREEN", "CHAIR",
-      "PAPER", "STRING", "RING", "BRACELET", "NECKLACE",
-      "BIRD", "HORSE", "COW", "SHEEP", "PIG",
-      "FROG", "BEAR", "LION", "TIGER", "ELEPHANT",
-      "CAMERA", "TELEPHONE", "RADIO", "TV", "COMPUTER"
+      "CHAIR", "CLOCK", "BREAD", "LIGHT", "PHONE"
+    ];
+
+    const EMOJI_BANK = [
+      "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯",
+      "🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🐤","🦆",
+      "🦉","🦇","🐺","🐗","🐴","🦄","🐝","🦋","🐌","🐢"
     ];
 
     const app = document.getElementById('app');
@@ -106,23 +100,21 @@
     let secretWord = "";
     let oddPlayer = 1;
     let countdownInterval = null;
+    let countdownCallback = null;
+    let playerEmojis = [];
 
-    // 🔊 Audio setup
+    // 🔊 Audio
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Update playBlip to accept a frequency
-    function playBlip(frequency = 880) {
+    function playBlip() {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
 
       osc.type = "sine";
-      osc.frequency.value = frequency;
+      osc.frequency.value = 880;
 
       gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        audioCtx.currentTime + 0.08
-      );
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
 
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -131,21 +123,21 @@
       osc.stop(audioCtx.currentTime + 0.08);
     }
 
-    // Map screen types to frequencies
-    const screenFrequencies = {
-      ready: 880,       // "Get ready" screen
-      value: 660,       // "Memorize your word" screen
-      nextPlayer: 550   // "Get the next player" screen
-    };
+    function getPlayerLabel(num) {
+      return `${playerEmojis[num - 1]} Player ${num}`;
+    }
 
     function showStartScreen() {
       clearInterval(countdownInterval);
       app.innerHTML = `
         <h1>Word Faker Game</h1>
         <p style="font-size: clamp(1.6rem, 2.5vw, 2.8rem); line-height: 1.4; max-width: 80%; margin: 0 auto 4vh auto;">
-          Each player gets a turn to secretly view a word while the others look away. All players see the same word... except one. That player sees only question marks and is known as <strong>The Faker</strong>.
+          Each player gets a turn to secretly view a word while the others look away.
+          All players see the same word... except one.
+          That player sees only question marks and is known as <strong>The Faker</strong>.
           <br /><br />
-          When it’s time to play, each player says a <em>different</em> word related to the secret word. The group must figure out who The Faker is; at the end of 3 rounds, players will vote on who The Faker is.
+          When it’s time to play, each player says a <em>different</em> word related to the secret word.
+          The group must figure out who The Faker is.
         </p>
         <p>How many players?</p>
         <input id="playerInput" placeholder="4" />
@@ -154,7 +146,7 @@
     }
 
     function startGame() {
-      audioCtx.resume(); // 🔓 unlock audio
+      audioCtx.resume();
 
       const input = document.getElementById('playerInput').value;
       const parsed = parseInt(input, 10);
@@ -165,22 +157,26 @@
       secretWord = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
       oddPlayer = Math.floor(Math.random() * players) + 1;
 
+      // Assign random emojis
+      const shuffled = [...EMOJI_BANK].sort(() => Math.random() - 0.5);
+      playerEmojis = shuffled.slice(0, players);
+
       showReadyScreen();
     }
 
     function showReadyScreen() {
-      showCountdown(`Player ${currentPlayer} ready?`, 5, showValueScreen, "ready");
+      showCountdown(`${getPlayerLabel(currentPlayer)} ready?`, 5, showValueScreen);
     }
 
     function showValueScreen() {
       const value = currentPlayer === oddPlayer ? "???" : secretWord;
-      showCountdown(`<span class="value">${value}</span>`, 5, nextPlayer, "value");
+      showCountdown(`<span class="value">${value}</span>`, 5, nextPlayer);
     }
 
     function nextPlayer() {
       if (currentPlayer < players) {
         currentPlayer++;
-        showCountdown(`Get Player ${currentPlayer}`, 5, showReadyScreen, "nextPlayer");
+        showCountdown(`Get ${getPlayerLabel(currentPlayer)}`, 5, showReadyScreen);
       } else {
         showEndScreen();
       }
@@ -197,22 +193,31 @@
     function showRevealScreen() {
       app.innerHTML = `
         <h1>Reveal</h1>
-        <p>Player ${oddPlayer} was The Faker!</p>
+        <p>${getPlayerLabel(oddPlayer)} was the ???</p>
         <button onclick="showStartScreen()">Reset</button>
       `;
     }
 
-    function showCountdown(message, seconds, callback, screenType) {
+    function skipCountdown() {
       clearInterval(countdownInterval);
+      if (countdownCallback) {
+        countdownCallback();
+      }
+    }
+
+    function showCountdown(message, seconds, callback) {
+      clearInterval(countdownInterval);
+      countdownCallback = callback;
       let remaining = seconds;
 
       app.innerHTML = `
         <h2>${message}</h2>
         <div class="countdown" id="count">${remaining}</div>
+        <button class="skip-btn" onclick="skipCountdown()">Skip</button>
       `;
 
       countdownInterval = setInterval(() => {
-        playBlip(screenFrequencies[screenType]); // 🔊 play blip with screen-specific frequency
+        playBlip();
         remaining--;
         document.getElementById('count').textContent = remaining;
 
