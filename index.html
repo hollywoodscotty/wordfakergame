@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Secret Word Game</title>
+  <title>Word Faker Game</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -62,11 +61,6 @@
       margin-left: auto;
       margin-right: auto;
     }
-    .skip-btn {
-      background: #777;
-      color: #000;
-      margin-top: 2vh;
-    }
     .countdown {
       font-size: clamp(5rem, 10vw, 10rem);
       margin-top: 2vh;
@@ -83,8 +77,17 @@
 
   <script>
     const WORD_BANK = [
-      "APPLE", "HOUSE", "RIVER", "PLANE", "STONE",
-      "CHAIR", "CLOCK", "BREAD", "LIGHT", "PHONE"
+      "APPLE","BANANA","ORANGE","HOUSE","CAR","TRAIN","PLANE","BOAT","RIVER",
+      "OCEAN","BEACH","MOUNTAIN","FOREST","DESERT","CLOUD","RAIN","SNOW",
+      "THUNDER","LIGHTNING","FIRE","SMOKE","STONE","ROCK","SAND","CHAIR",
+      "TABLE","COUCH","BED","PILLOW","BLANKET","CLOCK","WATCH","PHONE",
+      "COMPUTER","SCREEN","KEYBOARD","MOUSE","CAMERA","LIGHT","LAMP","DOOR",
+      "WINDOW","FLOOR","CEILING","WALL","STAIRS","BRIDGE","ROAD","STREET",
+      "CITY","TOWN","VILLAGE","SCHOOL","CLASS","TEACHER","STUDENT","BOOK",
+      "PAPER","PENCIL","PEN","ERASER","BAG","BACKPACK","SHOES","HAT","COAT",
+      "SHIRT","PANTS","FOOD","BREAD","CHEESE","MILK","WATER","COFFEE","TEA",
+      "SUGAR","SALT","PEPPER","CAKE","COOKIE","ICE","CANDLE","MIRROR",
+      "MUSIC","SONG","MOVIE","GAME","BALL","TOY","GIFT"
     ];
 
     const EMOJI_BANK = [
@@ -93,7 +96,7 @@
       "🦉","🦇","🐺","🐗","🐴","🦄","🐝","🦋","🐌","🐢"
     ];
 
-    const app = document.getElementById('app');
+    const app = document.getElementById("app");
 
     let players = 4;
     let currentPlayer = 1;
@@ -103,16 +106,14 @@
     let countdownCallback = null;
     let playerEmojis = [];
 
-    // 🔊 Audio
+    // 🔊 Countdown blip
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playBlip() {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
 
-      osc.type = "sine";
       osc.frequency.value = 880;
-
       gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
 
@@ -133,10 +134,10 @@
         <h1>Word Faker Game</h1>
         <p style="font-size: clamp(1.6rem, 2.5vw, 2.8rem); line-height: 1.4; max-width: 80%; margin: 0 auto 4vh auto;">
           Each player gets a turn to secretly view a word while the others look away.
-          All players see the same word... except one.
+          All players see the same word… except one.
           That player sees only question marks and is known as <strong>The Faker</strong>.
           <br /><br />
-          When it’s time to play, each player says a <em>different</em> word related to the secret word.
+          When it’s time to play, each player says a different word related to the secret word.
           The group must figure out who The Faker is.
         </p>
         <p>How many players?</p>
@@ -148,16 +149,14 @@
     function startGame() {
       audioCtx.resume();
 
-      const input = document.getElementById('playerInput').value;
+      const input = document.getElementById("playerInput").value;
       const parsed = parseInt(input, 10);
-
       players = Number.isFinite(parsed) && parsed > 0 ? parsed : 4;
-      currentPlayer = 1;
 
+      currentPlayer = 1;
       secretWord = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
       oddPlayer = Math.floor(Math.random() * players) + 1;
 
-      // Assign random emojis
       const shuffled = [...EMOJI_BANK].sort(() => Math.random() - 0.5);
       playerEmojis = shuffled.slice(0, players);
 
@@ -193,16 +192,14 @@
     function showRevealScreen() {
       app.innerHTML = `
         <h1>Reveal</h1>
-        <p>${getPlayerLabel(oddPlayer)} was the ???</p>
+        <p>${getPlayerLabel(oddPlayer)} was The Faker</p>
         <button onclick="showStartScreen()">Reset</button>
       `;
     }
 
     function skipCountdown() {
       clearInterval(countdownInterval);
-      if (countdownCallback) {
-        countdownCallback();
-      }
+      if (countdownCallback) countdownCallback();
     }
 
     function showCountdown(message, seconds, callback) {
@@ -213,13 +210,13 @@
       app.innerHTML = `
         <h2>${message}</h2>
         <div class="countdown" id="count">${remaining}</div>
-        <button class="skip-btn" onclick="skipCountdown()">Skip</button>
+        <button onclick="skipCountdown()">Skip Countdown</button>
       `;
 
       countdownInterval = setInterval(() => {
         playBlip();
         remaining--;
-        document.getElementById('count').textContent = remaining;
+        document.getElementById("count").textContent = remaining;
 
         if (remaining <= 0) {
           clearInterval(countdownInterval);
@@ -232,3 +229,4 @@
   </script>
 </body>
 </html>
+
