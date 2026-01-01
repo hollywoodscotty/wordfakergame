@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,6 +84,11 @@ button {
   margin: 2vh 0;
   font-size: 2.5rem;
 }
+
+.faker-reveal {
+  font-size: clamp(4rem,8vw,9rem);
+  margin: 3vh 0;
+}
 </style>
 </head>
 
@@ -90,13 +96,29 @@ button {
 <div class="card" id="app"></div>
 
 <script>
-const WORD_BANK = ["APPLE","BANANA","ORANGE","HOUSE","CAR","TRAIN","PLANE","BOAT","RIVER","OCEAN","BEACH","MOUNTAIN","FOREST","DESERT","CLOUD","RAIN","SNOW","FIRE","STONE","CHAIR","TABLE","PHONE","SCREEN","LIGHT","DOOR","WINDOW","ROAD","CITY","BOOK","PENCIL","BREAD","WATER","COFFEE","MUSIC","MOVIE","GAME"];
+const WORD_BANK = [
+"APPLE","BANANA","ORANGE","HOUSE","CAR","TRAIN","PLANE","BOAT","RIVER",
+"OCEAN","BEACH","MOUNTAIN","FOREST","DESERT","CLOUD","RAIN","SNOW",
+"THUNDER","LIGHTNING","FIRE","SMOKE","STONE","ROCK","SAND","CHAIR",
+"TABLE","COUCH","BED","PILLOW","BLANKET","CLOCK","WATCH","PHONE",
+"COMPUTER","SCREEN","KEYBOARD","MOUSE","CAMERA","LIGHT","LAMP","DOOR",
+"WINDOW","FLOOR","CEILING","WALL","STAIRS","BRIDGE","ROAD","STREET",
+"CITY","TOWN","VILLAGE","SCHOOL","CLASS","TEACHER","STUDENT","BOOK",
+"PAPER","PENCIL","PEN","ERASER","BAG","BACKPACK","SHOES","HAT","COAT",
+"SHIRT","PANTS","FOOD","BREAD","CHEESE","MILK","WATER","COFFEE","TEA",
+"SUGAR","SALT","PEPPER","CAKE","COOKIE","ICE","CANDLE","MIRROR",
+"MUSIC","SONG","MOVIE","GAME","BALL","TOY","GIFT"
+];
 
-const EMOJI_BANK = ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🦆","🦉","🦇","🐺","🐴","🦄"];
+const EMOJI_BANK = [
+"🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯",
+"🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🐤","🦆",
+"🦉","🦇","🐺","🐗","🐴","🦄","🐝","🦋","🐌","🐢"
+];
 
 const app = document.getElementById("app");
-const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 
+let audioCtx;
 let players = 4;
 let currentPlayer = 1;
 let oddPlayer = 1;
@@ -107,14 +129,15 @@ let points = [];
 let countdownInterval, countdownCallback;
 
 function blip(freq){
+  if(!audioCtx) return;
   const o = audioCtx.createOscillator();
   const g = audioCtx.createGain();
   o.frequency.value = freq;
-  g.gain.value = 0.08;
+  g.gain.value = 0.12;
   o.connect(g);
   g.connect(audioCtx.destination);
   o.start();
-  o.stop(audioCtx.currentTime+0.1);
+  o.stop(audioCtx.currentTime + 0.12);
 }
 
 function renderBar(active=true){
@@ -129,24 +152,29 @@ function renderBar(active=true){
 
 function startScreen(){
   app.innerHTML = `
-  <h1>Word Faker Game</h1>
-  <p>
-    Each player secretly views a word while others look away.<br><br>
-    Everyone gets the SAME word — except one.<br>
-    That player sees <strong>???</strong> and is the Faker.<br><br>
-    Players say related words aloud.<br>
-    Figure out who the Faker is!
-  </p>
-  <p>How many players?</p>
-  <input id="pcount" placeholder="4">
-  <button onclick="startGame()">Start</button>`;
+    <h1>Word Faker Game</h1>
+    <p>
+      Each player gets a turn to secretly view a word while the others look away.
+      All players see the same word… except one.
+      That player sees only question marks and is known as <strong>The Faker</strong>.
+      <br><br>
+      When it’s time to play, each player says a different word related to the secret word.
+      The group must figure out who The Faker is.
+    </p>
+    <p>How many players?</p>
+    <input id="pcount" placeholder="4">
+    <button onclick="startGame()">Start</button>`;
 }
 
 function startGame(){
-  audioCtx.resume();
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   players = parseInt(document.getElementById("pcount").value)||4;
-  if(points.length!==players) points = Array(players).fill(0);
+  points = Array(players).fill(0);
   emojis = [...EMOJI_BANK].sort(()=>Math.random()-0.5).slice(0,players);
+  startRound();
+}
+
+function startRound(){
   secretWord = WORD_BANK[Math.floor(Math.random()*WORD_BANK.length)];
   oddPlayer = Math.floor(Math.random()*players)+1;
   currentPlayer = 1;
@@ -177,7 +205,7 @@ function playScreen(){
   blip(750);
   app.innerHTML = `
     ${renderBar(false)}
-    <h1>Now Play!</h1>
+    <h1>Now PLAY!</h1>
     <button onclick="reveal()">Reveal</button>`;
 }
 
@@ -185,7 +213,8 @@ function reveal(){
   app.innerHTML = `
     ${renderBar(false)}
     <h1>Reveal</h1>
-    <p>${emojis[oddPlayer-1]} was the Faker</p>
+    <div class="faker-reveal">${emojis[oddPlayer-1]}</div>
+    <p>was The Faker</p>
     <button onclick="fakerGuess()">Continue</button>`;
 }
 
@@ -206,7 +235,7 @@ function scoreScreen(){
         <button onclick="points[${i}]++;scoreScreen()">+</button>
         <button onclick="points[${i}]--;scoreScreen()">-</button>
       </div>`).join("")}
-    <button onclick="startGame()">Next Round</button>`;
+    <button onclick="startRound()">Next Round</button>`;
 }
 
 function countdown(content,secs,cb){
@@ -231,4 +260,3 @@ startScreen();
 </script>
 </body>
 </html>
-
