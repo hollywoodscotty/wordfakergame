@@ -1,277 +1,234 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Word Faker Game</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #eee;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      text-align: center;
-    }
-    .card {
-      background: #1e1e1e;
-      padding: 6vh 6vw;
-      border-radius: 24px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-      width: 90vw;
-      height: 90vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      overflow: hidden;
-    }
-    h1 {
-      font-size: clamp(3rem, 6vw, 6rem);
-      margin: 0 0 3vh 0;
-    }
-    h2 {
-      font-size: clamp(2.5rem, 5vw, 5rem);
-      margin: 0 0 3vh 0;
-    }
-    p {
-      font-size: clamp(2rem, 4vw, 4rem);
-    }
-    input {
-      padding: 1vh 1vw;
-      font-size: clamp(2rem, 4vw, 4rem);
-      width: 60%;
-      text-align: center;
-      border-radius: 12px;
-      border: none;
-      display: block;
-      margin: 3vh auto;
-    }
-    button {
-      padding: 1.5vh 3vw;
-      font-size: clamp(2rem, 4vw, 4rem);
-      margin-top: 3vh;
-      cursor: pointer;
-      border: none;
-      border-radius: 16px;
-      background: #4caf50;
-      color: #000;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .countdown {
-      font-size: clamp(5rem, 10vw, 10rem);
-      margin-top: 2vh;
-    }
-    .value {
-      font-size: clamp(5rem, 10vw, 10rem);
-      font-weight: bold;
-      letter-spacing: 0.2em;
-    }
-    .player-bar {
-      display: flex;
-      justify-content: center;
-      gap: 2vw;
-      margin-bottom: 3vh;
-      flex-wrap: wrap;
-    }
-    .player {
-      opacity: 0.5;
-      font-size: 2.5rem;
-      transition: all 0.3s ease;
-    }
-    .player.active {
-      opacity: 1;
-      font-size: 4rem;
-    }
-    .score-row {
-      margin: 2vh;
-      font-size: 2.5rem;
-    }
-    .score-row button {
-      font-size: 2rem;
-      margin: 0 1vw;
-      padding: 0.5vh 1.5vw;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Word Faker Game</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+  text-align: center;
+}
+.card {
+  background: #1e1e1e;
+  padding: 6vh 6vw;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  width: 90vw;
+  height: 90vh;
+  overflow-y: auto;
+}
+h1 { font-size: clamp(3rem,6vw,6rem); }
+h2 { font-size: clamp(2.5rem,5vw,5rem); }
+p  { font-size: clamp(1.6rem,3vw,3rem); }
+
+input {
+  font-size: 2.5rem;
+  padding: 1vh 1vw;
+  border-radius: 12px;
+  border: none;
+  width: 50%;
+  text-align: center;
+}
+
+button {
+  font-size: 2.5rem;
+  padding: 1vh 3vw;
+  margin-top: 3vh;
+  border-radius: 16px;
+  border: none;
+  background: #4caf50;
+  cursor: pointer;
+}
+
+.countdown {
+  font-size: clamp(5rem,10vw,10rem);
+}
+
+.value {
+  font-size: clamp(5rem,10vw,10rem);
+  letter-spacing: 0.2em;
+}
+
+.player-bar {
+  display: flex;
+  justify-content: center;
+  gap: 2vw;
+  margin-bottom: 3vh;
+  flex-wrap: wrap;
+}
+
+.player {
+  font-size: 2.5rem;
+  opacity: 0.6;
+}
+
+.player.active {
+  font-size: 4rem;
+  opacity: 1;
+}
+
+.score-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2vw;
+  margin: 2vh 0;
+  font-size: 2.5rem;
+}
+</style>
 </head>
+
 <body>
-  <div class="card" id="app"></div>
+<div class="card" id="app"></div>
 
 <script>
-const WORD_BANK = [
-  "APPLE","BANANA","ORANGE","HOUSE","CAR","TRAIN","PLANE","BOAT","RIVER",
-  "OCEAN","BEACH","MOUNTAIN","FOREST","DESERT","CLOUD","RAIN","SNOW",
-  "THUNDER","LIGHTNING","FIRE","SMOKE","STONE","ROCK","SAND","CHAIR",
-  "TABLE","COUCH","BED","PILLOW","BLANKET","CLOCK","WATCH","PHONE",
-  "COMPUTER","SCREEN","KEYBOARD","MOUSE","CAMERA","LIGHT","LAMP","DOOR",
-  "WINDOW","FLOOR","CEILING","WALL","STAIRS","BRIDGE","ROAD","STREET",
-  "CITY","TOWN","VILLAGE","SCHOOL","CLASS","TEACHER","STUDENT","BOOK",
-  "PAPER","PENCIL","PEN","ERASER","BAG","BACKPACK","SHOES","HAT","COAT",
-  "SHIRT","PANTS","FOOD","BREAD","CHEESE","MILK","WATER","COFFEE","TEA",
-  "SUGAR","SALT","PEPPER","CAKE","COOKIE","ICE","CANDLE","MIRROR",
-  "MUSIC","SONG","MOVIE","GAME","BALL","TOY","GIFT"
-];
+const WORD_BANK = ["APPLE","BANANA","ORANGE","HOUSE","CAR","TRAIN","PLANE","BOAT","RIVER","OCEAN","BEACH","MOUNTAIN","FOREST","DESERT","CLOUD","RAIN","SNOW","FIRE","STONE","CHAIR","TABLE","PHONE","SCREEN","LIGHT","DOOR","WINDOW","ROAD","CITY","BOOK","PENCIL","BREAD","WATER","COFFEE","MUSIC","MOVIE","GAME"];
 
-const EMOJI_BANK = [
-  "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯",
-  "🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🐤","🦆",
-  "🦉","🦇","🐺","🐗","🐴","🦄","🐝","🦋","🐌","🐢"
-];
+const EMOJI_BANK = ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🐔","🐧","🐦","🦆","🦉","🦇","🐺","🐴","🦄"];
 
 const app = document.getElementById("app");
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
 
 let players = 4;
 let currentPlayer = 1;
-let secretWord = "";
 let oddPlayer = 1;
-let playerEmojis = [];
-let playerPoints = [];
+let secretWord = "";
+let emojis = [];
+let points = [];
 
-let countdownInterval = null;
-let countdownCallback = null;
+let countdownInterval, countdownCallback;
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-function playBlip() {
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.frequency.value = 880;
-  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.08);
+function blip(freq){
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.frequency.value = freq;
+  g.gain.value = 0.08;
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime+0.1);
 }
 
-function renderPlayerBar() {
+function renderBar(active=true){
   return `
-    <div class="player-bar">
-      ${playerEmojis.map((e,i)=>`
-        <div class="player ${i+1===currentPlayer?"active":""}">
-          ${e} (${playerPoints[i]})
-        </div>`).join("")}
-    </div>
-  `;
+  <div class="player-bar">
+    ${emojis.map((e,i)=>`
+      <div class="player ${active && i+1===currentPlayer?"active":""}">
+        ${e} (${points[i]})
+      </div>`).join("")}
+  </div>`;
 }
 
-function showStartScreen() {
+function startScreen(){
   app.innerHTML = `
-    <h1>Word Faker Game</h1>
-    <p>How many players?</p>
-    <input id="playerInput" placeholder="4" />
-    <button onclick="startGame()">Start</button>
-  `;
+  <h1>Word Faker Game</h1>
+  <p>
+    Each player secretly views a word while others look away.<br><br>
+    Everyone gets the SAME word — except one.<br>
+    That player sees <strong>???</strong> and is the Faker.<br><br>
+    Players say related words aloud.<br>
+    Figure out who the Faker is!
+  </p>
+  <p>How many players?</p>
+  <input id="pcount" placeholder="4">
+  <button onclick="startGame()">Start</button>`;
 }
 
-function startGame() {
+function startGame(){
   audioCtx.resume();
-  const input = parseInt(document.getElementById("playerInput").value, 10);
-  players = Number.isFinite(input) && input > 0 ? input : 4;
-
-  if (playerPoints.length !== players) {
-    playerPoints = Array(players).fill(0);
-  }
-
-  currentPlayer = 1;
+  players = parseInt(document.getElementById("pcount").value)||4;
+  if(points.length!==players) points = Array(players).fill(0);
+  emojis = [...EMOJI_BANK].sort(()=>Math.random()-0.5).slice(0,players);
   secretWord = WORD_BANK[Math.floor(Math.random()*WORD_BANK.length)];
   oddPlayer = Math.floor(Math.random()*players)+1;
-
-  const shuffled = [...EMOJI_BANK].sort(()=>Math.random()-0.5);
-  playerEmojis = shuffled.slice(0, players);
-
-  showReadyScreen();
+  currentPlayer = 1;
+  readyScreen();
 }
 
-function showReadyScreen() {
-  showCountdown(`${renderPlayerBar()}<h2>Player ${currentPlayer} ready?</h2>`,5,showValueScreen);
+function readyScreen(){
+  blip(600);
+  countdown(`${renderBar()}<h2>Player ${currentPlayer}, ready?</h2>`,5,wordScreen);
 }
 
-function showValueScreen() {
-  const value = currentPlayer===oddPlayer?"???":secretWord;
-  showCountdown(`${renderPlayerBar()}<div class="value">${value}</div>`,5,nextPlayer);
+function wordScreen(){
+  blip(900);
+  const v = currentPlayer===oddPlayer?"???":secretWord;
+  countdown(`${renderBar()}<div class="value">${v}</div>`,5,nextPlayer);
 }
 
-function nextPlayer() {
-  if (currentPlayer < players) {
+function nextPlayer(){
+  if(currentPlayer<players){
     currentPlayer++;
-    showReadyScreen();
+    readyScreen();
   } else {
-    showEndScreen();
+    playScreen();
   }
 }
 
-function showEndScreen() {
+function playScreen(){
+  blip(750);
   app.innerHTML = `
-    ${renderPlayerBar()}
-    <h1>Now PLAY!</h1>
-    <button onclick="showRevealScreen()">Reveal</button>
-  `;
+    ${renderBar(false)}
+    <h1>Now Play!</h1>
+    <button onclick="reveal()">Reveal</button>`;
 }
 
-function showRevealScreen() {
+function reveal(){
   app.innerHTML = `
-    ${renderPlayerBar()}
+    ${renderBar(false)}
     <h1>Reveal</h1>
-    <p>${playerEmojis[oddPlayer-1]} was The Faker</p>
-    <button onclick="showGuessScreen()">Faker Guess</button>
-  `;
+    <p>${emojis[oddPlayer-1]} was the Faker</p>
+    <button onclick="fakerGuess()">Continue</button>`;
 }
 
-function showGuessScreen() {
+function fakerGuess(){
   app.innerHTML = `
-    ${renderPlayerBar()}
-    <h1>Faker Guess</h1>
-    <input id="guessInput" placeholder="Guess the word" />
-    <button onclick="showScoreScreen()">Submit</button>
-  `;
+    ${renderBar(false)}
+    <h1>Faker</h1>
+    <p>Guess the word out loud.</p>
+    <button onclick="scoreScreen()">Continue</button>`;
 }
 
-function showScoreScreen() {
+function scoreScreen(){
   app.innerHTML = `
     <h1>Adjust Scores</h1>
-    ${playerEmojis.map((e,i)=>`
+    ${emojis.map((e,i)=>`
       <div class="score-row">
-        ${e} (${playerPoints[i]})
-        <button onclick="playerPoints[${i}]++">+</button>
-        <button onclick="playerPoints[${i}]--">-</button>
+        ${e} (${points[i]})
+        <button onclick="points[${i}]++;scoreScreen()">+</button>
+        <button onclick="points[${i}]--;scoreScreen()">-</button>
       </div>`).join("")}
-    <button onclick="startGame()">Next Round</button>
-  `;
+    <button onclick="startGame()">Next Round</button>`;
 }
 
-function skipCountdown() {
+function countdown(content,secs,cb){
   clearInterval(countdownInterval);
-  countdownCallback && countdownCallback();
-}
-
-function showCountdown(message, seconds, callback) {
-  clearInterval(countdownInterval);
-  countdownCallback = callback;
-  let remaining = seconds;
-
-  app.innerHTML = `
-    ${message}
-    <div class="countdown" id="count">${remaining}</div>
-    <button onclick="skipCountdown()">Skip</button>
-  `;
-
-  countdownInterval = setInterval(()=>{
-    playBlip();
-    remaining--;
-    document.getElementById("count").textContent = remaining;
-    if (remaining <= 0) {
-      clearInterval(countdownInterval);
-      setTimeout(callback,300);
-    }
+  countdownCallback=cb;
+  let r=secs;
+  app.innerHTML = `${content}<div class="countdown">${r}</div><button onclick="skip()">Skip</button>`;
+  countdownInterval=setInterval(()=>{
+    blip(880);
+    r--;
+    document.querySelector(".countdown").textContent=r;
+    if(r<=0){clearInterval(countdownInterval);cb();}
   },1000);
 }
 
-showStartScreen();
+function skip(){
+  clearInterval(countdownInterval);
+  countdownCallback();
+}
+
+startScreen();
 </script>
 </body>
 </html>
+
