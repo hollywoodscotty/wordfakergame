@@ -139,7 +139,6 @@ function blip(freq){
   o.stop(audioCtx.currentTime + 0.12);
 }
 
-/* 🔀 NEW: shuffle player order while keeping scores attached */
 function shufflePlayers(){
   for(let i = emojis.length - 1; i > 0; i--){
     const j = Math.floor(Math.random() * (i + 1));
@@ -156,6 +155,16 @@ function renderBar(active=true){
         ${e} (${points[i]})
       </div>`).join("")}
   </div>`;
+}
+
+/* NEW: "Player #'s Turn!" screen */
+function turnScreen(){
+  blip(500);
+  countdown(
+    `<h1>Player ${currentPlayer}'s Turn!</h1>`,
+    5,
+    readyScreen
+  );
 }
 
 function startScreen(){
@@ -183,28 +192,36 @@ function startGame(){
 }
 
 function startRound(){
-  shufflePlayers();          // ← player order randomized each round
+  shufflePlayers();
   secretWord = WORD_BANK[Math.floor(Math.random()*WORD_BANK.length)];
   oddPlayer = Math.floor(Math.random()*players)+1;
   currentPlayer = 1;
-  readyScreen();
+  turnScreen();
 }
 
 function readyScreen(){
   blip(600);
-  countdown(`${renderBar()}<h2>Player ${currentPlayer}, ready?</h2>`,5,wordScreen);
+  countdown(
+    `${renderBar()}<h2>Player ${currentPlayer}, ready?</h2>`,
+    5,
+    wordScreen
+  );
 }
 
 function wordScreen(){
   blip(900);
   const v = currentPlayer===oddPlayer?"???":secretWord;
-  countdown(`${renderBar()}<div class="value">${v}</div>`,5,nextPlayer);
+  countdown(
+    `${renderBar()}<div class="value">${v}</div>`,
+    5,
+    nextPlayer
+  );
 }
 
 function nextPlayer(){
   if(currentPlayer<players){
     currentPlayer++;
-    readyScreen();
+    turnScreen();
   } else {
     playScreen();
   }
@@ -222,7 +239,9 @@ function reveal(){
   app.innerHTML = `
     ${renderBar(false)}
     <h1>Reveal</h1>
-    <div class="faker-reveal">${emojis[oddPlayer-1]}</div>
+    <div class="faker-reveal">
+      Player ${oddPlayer} ${emojis[oddPlayer-1]}
+    </div>
     <p>was The Faker</p>
     <button onclick="fakerGuess()">Continue</button>`;
 }
@@ -240,7 +259,7 @@ function scoreScreen(){
     <h1>Adjust Scores</h1>
     ${emojis.map((e,i)=>`
       <div class="score-row">
-        ${e} (${points[i]})
+        Player ${i+1} ${e} (${points[i]})
         <button onclick="points[${i}]++;scoreScreen()">+</button>
         <button onclick="points[${i}]--;scoreScreen()">-</button>
       </div>`).join("")}
