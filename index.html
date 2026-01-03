@@ -27,7 +27,7 @@ body {
 }
 h1 { font-size: clamp(4rem,7vw,7rem); }
 h2 { font-size: clamp(2.5rem,5vw,5rem); }
-p  { font-size: clamp(1.6rem,3vw,3rem); }
+p, ul  { font-size: clamp(1.6rem,3vw,3rem); }
 
 .list {
   text-align: center;
@@ -140,16 +140,98 @@ let points = [];
 
 let countdownInterval, countdownCallback;
 
-function blip(freq){
+function melissaBad() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Create oscillator for the low rumble
+    const oscillator = audioCtx.createOscillator();
+    oscillator.type = 'square'; // softer, rumblier than square
+    oscillator.frequency.setValueAtTime(30, audioCtx.currentTime); // low, grumbly
+
+    // Add some distortion/noise using Gain modulation
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+    // Create a low-frequency oscillator to wobble the main frequency
+    const lfo = audioCtx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(30, audioCtx.currentTime); // wobble speed
+
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.setValueAtTime(20, audioCtx.currentTime); // how much it wobbles
+
+    // Connect LFO to main oscillator frequency
+    lfo.connect(lfoGain);
+    lfoGain.connect(oscillator.frequency);
+
+    // Connect main oscillator to gain, then to speakers
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    // Start both oscillators
+    oscillator.start();
+    lfo.start();
+
+    // Stop after 0.8 seconds
+    oscillator.stop(audioCtx.currentTime + 0.8);
+    lfo.stop(audioCtx.currentTime + 0.8);
+}
+
+function blip(input){
   if(!audioCtx) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.frequency.value = freq;
-  g.gain.value = 0.12;
-  o.connect(g);
-  g.connect(audioCtx.destination);
-  o.start();
-  o.stop(audioCtx.currentTime + 0.12);
+
+  const DEFAULT_FREQ = 800;
+  const DEFAULT_DURATION = 0.12;
+  const DEFAULT_GAP = 0.12;
+  const GAIN = 0.12;
+
+  let pattern;
+
+  // Normalize input
+  if (Array.isArray(input)) {
+    // Nested arrays → [[freq,dur,gap], ...]
+    if (Array.isArray(input[0])) {
+      pattern = input.map(v => ({
+        freq: v[0] ?? DEFAULT_FREQ,
+        duration: v[1] ?? DEFAULT_DURATION,
+        gap: v[2] ?? DEFAULT_GAP
+      }));
+    }
+    // Flat array → [freq,freq,freq]
+    else {
+      pattern = input.map(v => ({
+        freq: v ?? DEFAULT_FREQ,
+        duration: DEFAULT_DURATION,
+        gap: DEFAULT_GAP
+      }));
+    }
+  }
+  // Single number
+  else {
+    pattern = [{
+      freq: input ?? DEFAULT_FREQ,
+      duration: DEFAULT_DURATION,
+      gap: DEFAULT_GAP
+    }];
+  }
+
+  let t = audioCtx.currentTime;
+
+  pattern.forEach(p => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+
+    o.frequency.value = p.freq;
+    g.gain.value = GAIN;
+
+    o.connect(g);
+    g.connect(audioCtx.destination);
+
+    o.start(t);
+    o.stop(t + p.duration);
+
+    t += p.duration + p.gap;
+  });
 }
 
 function shufflePlayers(){
@@ -250,27 +332,37 @@ function playScreen(){
 
 function reveal(){
   blip(800);
-  app.innerHTML = `
-    ${renderBar(false)}
-    <h1>Reveal</h1>
-    <div class="faker-reveal">
-      ${emojis[oddPlayer-1]}Player ${oddPlayer}
-    </div>
-    <p>was The Faker</p>
-    <button onclick="fakerGuess()">Continue</button>`;
+  countdown(
+    `${renderBar(false)}
+     <h1>Reveal</h1>
+     <div class="faker-reveal">
+       ${emojis[oddPlayer-1]}Player ${oddPlayer}
+     </div>
+     <p>was The Faker</p>`,
+    5,
+    fakerGuess
+  );
 }
 
 function fakerGuess(){
   blip(800);
-  app.innerHTML = `
-    ${renderBar(false)}
-    <h1>Faker ${emojis[oddPlayer-1]}Player ${oddPlayer},</h1>
-    <p>Guess the word out loud.</p>
-    <button onclick="scoreScreen()">Continue</button>`;
+  countdown(
+    `${renderBar(false)}
+     <h1>Faker ${emojis[oddPlayer-1]}Player ${oddPlayer},</h1>
+     <p>Guess the word out loud.</p>`,
+    30,
+    scoreScreen
+  );
 }
 
 function scoreScreen(){
-  blip(800);
+  blip([
+    [800,0.1,0],
+    [1000,0.1,0],
+    [1200,0.1,0],
+    [1000,0.1,0],
+    [800]
+  ]);
   app.innerHTML = `
     <h1>Adjust Scores</h1><br>
     <div class="list">
@@ -286,7 +378,7 @@ function scoreScreen(){
         <button onclick="points[${i}]++;scoreScreen()">+</button>
         <button onclick="points[${i}]--;scoreScreen()">-</button>
       </div>`).join("")}
-    <button onclick="startRound()">Next Round</button>`;
+    <button onclick="startRound()">Next Round</button><br><button onclick="melissaBad()">Melissa's Words Were Bad</button>`;
 }
 
 function countdown(content,secs,cb){
