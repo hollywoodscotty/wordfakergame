@@ -25,9 +25,19 @@ body {
   height: 90vh;
   overflow-y: auto;
 }
-h1 { font-size: clamp(3rem,6vw,6rem); }
+h1 { font-size: clamp(4rem,7vw,7rem); }
 h2 { font-size: clamp(2.5rem,5vw,5rem); }
 p  { font-size: clamp(1.6rem,3vw,3rem); }
+
+.list {
+  text-align: center;
+  text-wrap: wrap;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+ul {text-align: left;}
 
 input {
   font-size: 2.5rem;
@@ -50,11 +60,14 @@ button {
 
 .countdown {
   font-size: clamp(5rem,10vw,10rem);
+  letter-spacing: 0.2em;
+  font-weight: 100;
 }
 
 .value {
   font-size: clamp(5rem,10vw,10rem);
   letter-spacing: 0.2em;
+  color: #FF7777;
 }
 
 .player-bar {
@@ -159,10 +172,10 @@ function renderBar(active=true){
 
 /* NEW: "Player #'s Turn!" screen */
 function turnScreen(){
-  blip(500);
+  blip(400);
   countdown(
-    `<h1>Player ${currentPlayer}'s Turn!</h1>`,
-    5,
+    `${renderBar()}<h2>${emojis[currentPlayer-1]}Player ${currentPlayer},<br><h2><h1>Your turn!</h1>`, 
+    5, 
     readyScreen
   );
 }
@@ -202,17 +215,17 @@ function startRound(){
 function readyScreen(){
   blip(600);
   countdown(
-    `${renderBar()}<h2>Player ${currentPlayer}, ready?</h2>`,
+    `${renderBar()}<h2>${emojis[currentPlayer-1]}Player ${currentPlayer},<br><h2><h1>Ready?</h1>`,
     5,
     wordScreen
   );
 }
 
 function wordScreen(){
-  blip(900);
+  blip(800);
   const v = currentPlayer===oddPlayer?"???":secretWord;
   countdown(
-    `${renderBar()}<div class="value">${v}</div>`,
+    `${renderBar()}<h2>${emojis[currentPlayer-1]}Player ${currentPlayer}, your word is:<br><h2><span class="value">${v}</span>`,
     5,
     nextPlayer
   );
@@ -228,7 +241,7 @@ function nextPlayer(){
 }
 
 function playScreen(){
-  blip(750);
+  blip(1000);
   app.innerHTML = `
     ${renderBar(false)}
     <h1>Now PLAY!</h1>
@@ -236,27 +249,37 @@ function playScreen(){
 }
 
 function reveal(){
+  blip(800);
   app.innerHTML = `
     ${renderBar(false)}
     <h1>Reveal</h1>
     <div class="faker-reveal">
-      Player ${oddPlayer} ${emojis[oddPlayer-1]}
+      ${emojis[oddPlayer-1]}Player ${oddPlayer}
     </div>
     <p>was The Faker</p>
     <button onclick="fakerGuess()">Continue</button>`;
 }
 
 function fakerGuess(){
+  blip(800);
   app.innerHTML = `
     ${renderBar(false)}
-    <h1>Faker</h1>
+    <h1>Faker ${emojis[oddPlayer-1]}Player ${oddPlayer},</h1>
     <p>Guess the word out loud.</p>
     <button onclick="scoreScreen()">Continue</button>`;
 }
 
 function scoreScreen(){
+  blip(800);
   app.innerHTML = `
-    <h1>Adjust Scores</h1>
+    <h1>Adjust Scores</h1><br>
+    <div class="list">
+      <ul>
+        <li>The players who guessed The Faker get <b>1 point</b>.<br></li>
+        <li>If The Faker fooled more than half of the players, The Faker gets <b>1 point</b>.<br></li>
+        <li>If The Faker guessed the word in the end, The Faker gets <b>1 more point</b>.</li>
+      </ul>
+    </div>
     ${emojis.map((e,i)=>`
       <div class="score-row">
         Player ${i+1} ${e} (${points[i]})
@@ -272,7 +295,7 @@ function countdown(content,secs,cb){
   let r=secs;
   app.innerHTML = `${content}<div class="countdown">${r}</div><button onclick="skip()">Skip</button>`;
   countdownInterval=setInterval(()=>{
-    blip(880);
+    blip(1200);
     r--;
     document.querySelector(".countdown").textContent=r;
     if(r<=0){clearInterval(countdownInterval);cb();}
