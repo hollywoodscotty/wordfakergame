@@ -101,6 +101,34 @@ button {
   font-size: clamp(4rem,8vw,9rem);
   margin: 3vh 0;
 }
+
+@keyframes jiggle {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  50% { transform: rotate(-15deg); }
+  75% { transform: rotate(10deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-10px); }
+  50% { transform: translateY(5px); }
+  75% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+.player .emoji {
+  display: inline-block; /* allows transform animations */
+}
+
+.jiggle {
+  animation: jiggle 0.5s ease-in-out;
+}
+
+.bounce {
+  animation: bounce 0.5s ease-in-out;
+}
 </style>
 </head>
 
@@ -177,6 +205,26 @@ function melissaBad() {
     lfo.stop(audioCtx.currentTime + 0.8);
 }
 
+// Emoji jiggle/bounce logic
+function randomEmojiEffect() {
+  const emojiElems = document.querySelectorAll(".player .emoji");
+  if(emojiElems.length === 0) return;
+
+  if(Math.random() < 0.5){
+    const randomIndex = Math.floor(Math.random() * emojiElems.length);
+    const chosen = emojiElems[randomIndex];
+
+    const effect = Math.random() < 0.5 ? "jiggle" : "bounce";
+    chosen.classList.add(effect);
+
+    setTimeout(()=> chosen.classList.remove(effect), 500);
+  }
+}
+
+
+// Run the effect randomly every 0.5–1.5 seconds
+setInterval(randomEmojiEffect, 700 + Math.random() * 800);
+
 function blip(input){
   if(!audioCtx) return;
 
@@ -247,7 +295,7 @@ function renderBar(active=true){
   <div class="player-bar">
     ${emojis.map((e,i)=>`
       <div class="player ${active && i+1===currentPlayer?"active":""}">
-        ${e} (${points[i]})
+        <span class="emoji">${e}</span> (${points[i]})
       </div>`).join("")}
   </div>`;
 }
@@ -256,7 +304,7 @@ function renderBar(active=true){
 function turnScreen(){
   blip(400);
   countdown(
-    `${renderBar()}<h2>${emojis[currentPlayer-1]}Player ${currentPlayer},<br><h2><h1>Your turn!</h1>`, 
+    `${renderBar()}<h2>${emojis[currentPlayer-1]} is Player ${currentPlayer} this round.<br><h2><h1>${emojis[currentPlayer-1]}Player ${currentPlayer}, it's your turn!</h1>`, 
     5, 
     readyScreen
   );
@@ -307,7 +355,7 @@ function wordScreen(){
   blip(800);
   const v = currentPlayer===oddPlayer?"???":secretWord;
   countdown(
-    `${renderBar()}<h2>${emojis[currentPlayer-1]}Player ${currentPlayer}, your word is:<br><h2><span class="value">${v}</span>`,
+    `${renderBar()}<h2>${emojis[currentPlayer-1]}Player ${currentPlayer}, the secret word is:<br><h2><span class="value">${v}</span>`,
     5,
     nextPlayer
   );
